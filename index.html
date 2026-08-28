@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitHub Copilot SDK — Agents for every app</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --border-subtle: #21262d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --text-subtle: #6e7681;
+      --accent: #58a6ff;
+      --accent-hover: #79b8ff;
+      --accent-glow: rgba(88, 166, 255, 0.15);
+      --green: #3fb950;
+      --green-muted: rgba(63, 185, 80, 0.15);
+      --purple: #a371f7;
+      --purple-muted: rgba(163, 113, 247, 0.12);
+      --orange: #f78166;
+      --yellow: #d29922;
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13, 17, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0 2rem;
+    }
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .nav-brand svg { color: var(--text-muted); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: #0d1117 !important;
+      padding: 6px 16px;
+      border-radius: 6px;
+      font-weight: 600 !important;
+      transition: background 0.15s, opacity 0.15s !important;
+    }
+    .nav-cta:hover { background: var(--accent-hover) !important; color: #0d1117 !important; }
+
+    /* HERO */
+    .hero {
+      padding: 100px 2rem 80px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(88,166,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-muted);
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      color: var(--green);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    h1 span {
+      background: linear-gradient(90deg, var(--accent) 0%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 4rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0d1117;
+    }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(88,166,255,0.25); }
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--surface); border-color: var(--text-subtle); transform: translateY(-1px); }
+
+    .badges {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .badge-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 10px 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .badge-item:hover { border-color: var(--border); color: var(--text); }
+    .badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .badge-dot.npm { background: #cb0000; }
+    .badge-dot.pypi { background: #3572A5; }
+    .badge-dot.go { background: #00ADD8; }
+    .badge-dot.nuget { background: #004880; }
+    .badge-dot.cargo { background: #dea584; }
+    .badge-dot.maven { background: #f17322; }
+
+    /* SECTION LAYOUT */
+    section { padding: 80px 2rem; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    h2 {
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .section-intro {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin-bottom: 3rem;
+    }
+
+    /* SDK GRID */
+    .sdk-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1px;
+      background: var(--border-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .sdk-card {
+      background: var(--surface);
+      padding: 1.75rem;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .sdk-card:hover { background: var(--surface2); }
+    .sdk-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+    .sdk-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .sdk-icon {
+      width: 32px; height: 32px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .sdk-links { display: flex; gap: 8px; }
+    .sdk-link {
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(88,166,255,0.2);
+      transition: all 0.15s;
+    }
+    .sdk-link:hover { background: var(--accent-glow); border-color: var(--accent); }
+    .sdk-desc { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .install-block {
+      background: var(--bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .install-block:hover { border-color: var(--border); }
+    .install-block code { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-subtle);
+      cursor: pointer;
+      padding: 2px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover { color: var(--text); }
+    .copy-btn.copied { color: var(--green); }
+
+    /* ARCHITECTURE */
+    .arch-section { background: var(--surface); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+    .arch-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    @media (max-width: 768px) { .arch-layout { grid-template-columns: 1fr; } }
+    .arch-diagram {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .arch-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+    .arch-row:last-child { margin-bottom: 0; }
+    .arch-arrow {
+      text-align: center;
+      color: var(--text-subtle);
+      font-size: 0.75rem;
+      padding: 2px 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .arch-icon { font-size: 1.25rem; }
+    .arch-row-text { font-size: 0.85rem; color: var(--text-muted); }
+    .arch-row-text strong { color: var(--text); display: block; font-size: 0.9rem; }
+    .arch-label {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: var(--text-subtle);
+      background: var(--surface2);
+      border: 1px solid var(--border-subtle);
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+    .feature-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .feature-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--green-muted);
+      border: 1px solid rgba(63,185,80,0.3);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .feature-check svg { color: var(--green); }
+    .feature-text strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+    .feature-text span { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* FEATURES GRID */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .feature-card:hover { border-color: var(--border); transform: translateY(-2px); }
+    .feature-card-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .feature-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.875rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* AUTH */
+    .auth-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: border-color 0.15s;
+    }
+    .auth-card:hover { border-color: var(--border); }
+    .auth-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .auth-card h3 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .auth-card p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; }
+
+    /* FAQ */
+    .faq-section { background: var(--surface); border-top: 1px solid var(--border-subtle); }
+    .faq-list { max-width: 800px; display: flex; flex-direction: column; gap: 0; }
+    .faq-item {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .faq-item:first-child { border-top: 1px solid var(--border-subtle); }
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text);
+      text-align: left;
+      padding: 1.25rem 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'Inter', sans-serif;
+    }
+    .faq-question:hover { color: var(--accent); }
+    .faq-chevron { flex-shrink: 0; transition: transform 0.2s; color: var(--text-subtle); }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-answer {
+      display: none;
+      padding-bottom: 1.25rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-answer { display: block; }
+
+    /* CTA */
+    .cta-section { text-align: center; padding: 100px 2rem; }
+    .cta-card {
+      background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4rem 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .cta-card h2 { margin-bottom: 1rem; font-size: clamp(1.5rem, 3vw, 2rem); }
+    .cta-card p { color: var(--text-muted); margin-bottom: 2rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+    .cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 2.5rem 2rem;
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .footer-links a {
+      color: var(--text-subtle);
+      text-decoration: none;
+      font-size: 0.8rem;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--text-muted); }
+
+    /* DIVIDER */
+    .divider { border: none; border-top: 1px solid var(--border-subtle); }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero { padding: 70px 1.25rem 60px; }
+      section { padding: 60px 1.25rem; }
+      .sdk-grid { grid-template-columns: 1fr; }
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 10px 20px;
+      border-radius: 100px;
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub Copilot SDK
+    </a>
+    <ul class="nav-links">
+      <li><a href="#sdks">SDKs</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="https://github.com/github/copilot-sdk" class="nav-cta">Get Started</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    Generally Available
+  </div>
+  <h1>Agents for<br /><span>every app.</span></h1>
+  <p class="hero-sub">Embed Copilot's agentic workflows in your application. No custom orchestration — you define behavior, Copilot handles planning, tool invocation, and file edits.</p>
+  <div class="hero-actions">
+    <a href="https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md" class="btn btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      Get Started
+    </a>
+    <a href="https://github.com/github/copilot-sdk" class="btn btn-secondary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+  <div class="badges">
+    <a class="badge-item" href="https://www.npmjs.com/package/@github/copilot-sdk"><span class="badge-dot npm"></span>npm</a>
+    <a class="badge-item" href="https://pypi.org/project/github-copilot-sdk/"><span class="badge-dot pypi"></span>PyPI</a>
+    <a class="badge-item" href="https://pkg.go.dev/github.com/github/copilot-sdk/go"><span class="badge-dot go"></span>Go</a>
+    <a class="badge-item" href="https://www.nuget.org/packages/GitHub.Copilot.SDK"><span class="badge-dot nuget"></span>NuGet</a>
+    <a class="badge-item" href="https://crates.io/crates/github-copilot-sdk"><span class="badge-dot cargo"></span>crates.io</a>
+    <a class="badge-item" href="https://central.sonatype.com/artifact/com.github/copilot-sdk-java"><span class="badge-dot maven"></span>Maven</a>
+  </div>
+</header>
+
+<!-- SDKs -->
+<section id="sdks">
+  <div class="container">
+    <p class="section-label">Available SDKs</p>
+    <h2>Six languages, one runtime.</h2>
+    <p class="section-intro">The same production-tested agent engine behind the Copilot CLI, available in every major language.</p>
+    <div class="sdk-grid">
+
+      <div class="sdk-card">
+        <div class="sdk-header">
+          <div class="sdk-name">
+            <div class="sdk-icon" style="background:#cb000018; color:#cb0000;">JS</div>
+            Node.js / TypeScript
+          </div>
+          <div class="sdk-links">
+            <a class="sdk-link" href="https://github.com/github/awesome-copilot/blob/main/cookbook/copilot-sdk/nodejs/README.md">Cookbook</a>
+          </div>
+        </div>
+        <p class="sdk-desc">Full TypeScript types. CLI bundled automatically — no separate install needed.</p>
+        <div class="install-block" onclick="copyText(this, 'npm install @github/copilot-sdk')">
+          <code>npm install @github/copilot-sdk</code>
+          <button class="copy-btn" aria-label="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sdk-card">
+        <div class="sdk-header">
+          <div class="sdk-name">
+            <div class="sdk-icon" style="background:#3572a518; color:#3572A5;">Py</div>
+            Python
+          </div>
+          <div class="sdk-links">
+            <a class="sdk-link" href="https://github.com/github/awesome-copilot/blob/main/cookbook/copilot-sdk/python/README.md">Cookbook</a>
+          </div>
+        </div>
+        <p class="sdk-desc">Async-native with full type annotations. CLI bundled — works out of the box.</p>
+        <div class="install-block" onclick="copyText(this, 'pip install github-copilot-sdk')">
+          <code>pip install github-copilot-sdk</code>
+          <button class="copy-btn" aria-label="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sdk-card">
+        <div class="sdk-header">
+          <div class="sdk-name">
+            <div class="sdk-icon" style="background:#00add818; color:#00ADD8;">Go</div>
+            Go
+          </div>
+          <div class="sdk-links">
+            <a class="sdk-link" href="https://pkg.go.dev/github.com/github/copilot-sdk/go#readme-api-reference">API Docs</a>
+            <a class="sdk-link" href="https://github.com/github/awesome-copilot/blob/main/cookbook/copilot-sdk/go/README.md">Cookbook</a>
+          </div>
+        </div>
+        <p class="sdk-desc">Idiomatic Go with context support. Supports app-level CLI bundling for easy distribution.</p>
+        <div class="install-block" onclick="copyText(this, 'go get github.com/github/copilot-sdk/go')">
+          <code>go get github.com/github/copilot-sdk/go</code>
+          <button class="copy-btn" aria-label="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sdk-card">
+        <div class="sdk-header">
+          <div class="sdk-name">
+            <div class="sdk-icon" style="background:#00488018; color:#5c9fd6;">.NET</div>
+            .NET
+          </div>
+          <div class="sdk-links">
+            <a class="sdk-link" href="https://github.com/github/awesome-copilot/blob/main/cookbook/copilot-sdk/dotnet/README.md">Cookbook</a>
+          </div>
+        </div>
+        <p class="sdk-desc">C# with full async/await support. CLI bundled as NuGet dependency.</p>
+        <div class="install-block" onclick="copyText(this, 'dotnet add package GitHub.Copilot.SDK')">
+          <code>dotnet add package GitHub.Copilot.SDK</code>
+          <button class="copy-btn" aria-label="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sdk-card">
+        <div class="sdk-header">
+          <div class="sdk-name">
+            <div class="sdk-icon" style="background:#dea58418; color:#dea584;">Rs</div>
+            Rust
+          </div>
+          <div class="sdk-links">
+            <a class="sdk-link" href="https://docs.rs/github-copilot-sdk/latest/github_copilot_sdk/#api-reference">API Docs</a>
+          </div>
+        </div>
+        <p class="sdk-desc">Zero-cost abstractions, async Tokio runtime. CLI bundling support built in.</p>
+        <div class="install-block" onclick="copyText(this, 'cargo add github-copilot-sdk')">
+          <code>cargo add github-copilot-sdk</code>
+          <button class="copy-btn" aria-label="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="sdk-card">
+        <div class="sdk-header">
+          <div class="sdk-name">
+            <div class="sdk-icon" style="background:#f1732218; color:#f17322;">Jv</div>
+            Java
+          </div>
+          <div class="sdk-links">
+            <a class="sdk-link" href="https://javadoc.io/doc/com.github/copilot-sdk-java/latest/">API Docs</a>
+            <a class="sdk-link" href="https://github.com/github/awesome-copilot/blob/main/cookbook/copilot-sdk/java/README.md">Cookbook</a>
+          </div>
+        </div>
+        <p class="sdk-desc">Maven &amp; Gradle compatible. Spring-friendly with CompletableFuture support.</p>
+        <div class="install-block" onclick="copyText(this, 'com.github:copilot-sdk-java')">
+          <code>com.github:copilot-sdk-java</code>
+          <button class="copy-btn" aria-label="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture" class="arch-section">
+  <div class="container">
+    <div class="arch-layout">
+      <div>
+        <p class="section-label">How it works</p>
+        <h2>Simple by design.</h2>
+        <p class="section-intro" style="margin-bottom: 2rem;">The SDK manages the Copilot CLI process lifecycle automatically. Your app talks to the SDK; the SDK talks to the CLI over JSON-RPC.</p>
+        <ul class="feature-list">
+          <li>
+            <div class="feature-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="feature-text">
+              <strong>Automatic process management</strong>
+              <span>The SDK starts, monitors, and stops the CLI process — no shell scripts required.</span>
+            </div>
+          </li>
+          <li>
+            <div class="feature-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="feature-text">
+              <strong>Permission-controlled tools</strong>
+              <span>Approve, deny, or customize every tool call through your own permission handler.</span>
+            </div>
+          </li>
+          <li>
+            <div class="feature-check"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <div class="feature-text">
+              <strong>Bring your own CLI or connect externally</strong>
+              <span>Override the bundled binary or point the SDK at an already-running CLI server.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="arch-diagram">
+        <div class="arch-row">
+          <div class="arch-icon">🖥️</div>
+          <div class="arch-row-text">
+            <strong>Your Application</strong>
+            Defines agents, handles permissions
+          </div>
+        </div>
+        <div class="arch-arrow">↓ &nbsp;SDK API calls</div>
+        <div class="arch-row">
+          <div class="arch-icon">📦</div>
+          <div class="arch-row-text">
+            <strong>SDK Client</strong>
+            Manages lifecycle &amp; routing
+          </div>
+          <span class="arch-label">your language</span>
+        </div>
+        <div class="arch-arrow">↓ &nbsp;JSON-RPC</div>
+        <div class="arch-row">
+          <div class="arch-icon">🤖</div>
+          <div class="arch-row-text">
+            <strong>Copilot CLI</strong>
+            Planning, tool calls, file edits
+          </div>
+          <span class="arch-label">bundled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <p class="section-label">Features</p>
+    <h2>Everything you need to ship.</h2>
+    <p class="section-intro">Built on the same engine that powers Copilot CLI — production-tested and ready to embed.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-card-icon" style="background: rgba(88,166,255,0.1);">🧠</div>
+        <h3>Custom Agents &amp; Skills</h3>
+        <p>Define your own agent behavior, custom skills, and domain-specific tools. Extend Copilot's capabilities to match your use case.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon" style="background: rgba(163,113,247,0.1);">🔌</div>
+        <h3>MCP Integration</h3>
+        <p>Connect Model Context Protocol servers to expose additional tools and context to the agent at runtime.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon" style="background: rgba(63,185,80,0.1);">🔐</div>
+        <h3>Flexible Authentication</h3>
+        <p>GitHub OAuth, signed-in user, environment tokens, or BYOK with your own API keys from OpenAI, Anthropic, and Azure.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon" style="background: rgba(247,129,102,0.1);">🪝</div>
+        <h3>Lifecycle Hooks</h3>
+        <p>Intercept tool calls before and after execution to add logging, validation, or custom side effects.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon" style="background: rgba(210,153,34,0.1);">📊</div>
+        <h3>Observability</h3>
+        <p>Built-in structured logging and tracing. Integrate with your existing monitoring stack with minimal setup.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon" style="background: rgba(88,166,255,0.1);">🌐</div>
+        <h3>All Copilot Models</h3>
+        <p>Access every model available via Copilot CLI. Query supported models at runtime to let users choose.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTH -->
+<section style="padding-top: 0; padding-bottom: 80px;">
+  <div class="container">
+    <p class="section-label">Authentication</p>
+    <h2>Works with how you auth.</h2>
+    <p class="section-intro">Four methods to fit every deployment model — from personal dev tools to production multi-tenant apps.</p>
+    <div class="auth-grid">
+      <div class="auth-card">
+        <div class="auth-icon">👤</div>
+        <h3>Signed-in User</h3>
+        <p>Uses stored OAuth credentials from <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent);">copilot</code> CLI login. Ideal for dev tools.</p>
+      </div>
+      <div class="auth-card">
+        <div class="auth-icon">🔑</div>
+        <h3>OAuth GitHub App</h3>
+        <p>Pass user tokens from your GitHub OAuth app. Great for multi-user SaaS products.</p>
+      </div>
+      <div class="auth-card">
+        <div class="auth-icon">🌿</div>
+        <h3>Environment Variables</h3>
+        <p><code style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent);">COPILOT_GITHUB_TOKEN</code>, <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent);">GH_TOKEN</code>, or <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent);">GITHUB_TOKEN</code>. Perfect for CI/CD.</p>
+      </div>
+      <div class="auth-card">
+        <div class="auth-icon">🗝️</div>
+        <h3>BYOK</h3>
+        <p>No GitHub subscription needed. Use your own API keys from OpenAI, Anthropic, or Azure.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq-section">
+  <div class="container">
+    <p class="section-label">FAQ</p>
+    <h2>Common questions.</h2>
+    <div class="faq-list" style="margin-top: 2.5rem;">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Do I need a GitHub Copilot subscription?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">Yes — unless you're using BYOK (Bring Your Own Key). With BYOK, you can use the SDK without GitHub authentication by configuring your own API keys from supported LLM providers. GitHub Copilot includes a free tier with limited usage.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How does billing work?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">Billing is the same model as the Copilot CLI — each prompt counts toward your usage allowance. See the GitHub Copilot pricing page for details, including the free tier.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Do I need to install the Copilot CLI separately?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">No — for Node.js, Python, and .NET SDKs, the Copilot CLI is bundled automatically as a dependency. For Go, Java, and Rust, you'll need to install the CLI manually or ensure it's in your PATH. Go and Rust also expose CLI bundling features for distribution.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What tools are enabled by default?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">By default the SDK exposes Copilot CLI's first-party tools, similar to running with <code style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--accent);">--allow-all</code>. Tool execution is still governed by your permission handler, so you can approve, deny, or customize any call. Configure which tools are available through the SDK client options.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Can I use custom agents, skills, or tools?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">Yes. Define custom agents, skills, and tools — and integrate additional tools as needed. See the SDK docs for your preferred language for details.</div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Is the SDK production-ready?
+          <svg class="faq-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="faq-answer">Yes — the GitHub Copilot SDK is generally available and follows semantic versioning. See CHANGELOG.md for release notes.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-card">
+    <p class="section-label" style="margin-bottom: 1rem;">Ready to build?</p>
+    <h2>Add Copilot to your app today.</h2>
+    <p>Follow the getting started guide or dive into a language-specific cookbook to ship your first agent in minutes.</p>
+    <div class="cta-actions">
+      <a href="https://github.com/github/copilot-sdk/blob/main/docs/getting-started.md" class="btn btn-primary">Getting Started Guide</a>
+      <a href="https://github.com/github/awesome-copilot/blob/main/cookbook/copilot-sdk" class="btn btn-secondary">Browse Cookbook</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub Copilot SDK — MIT License
+    </div>
+    <ul class="footer-links">
+      <li><a href="https://github.com/github/copilot-sdk/blob/main/docs/README.md">Docs</a></li>
+      <li><a href="https://github.com/github/copilot-sdk/blob/main/CHANGELOG.md">Changelog</a></li>
+      <li><a href="https://github.com/github/copilot-sdk/blob/main/CONTRIBUTING.md">Contributing</a></li>
+      <li><a href="https://github.com/github/copilot-sdk/issues">Issues</a></li>
+      <li><a href="https://github.com/github/copilot-sdk/blob/main/SECURITY.md">Security</a></li>
+    </ul>
+  </div>
+</footer>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+  function copyText(el, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = el.querySelector('.copy-btn');
+      btn.classList.add('copied');
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+      showToast('Copied to clipboard');
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+      }, 2000);
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function toggleFaq(btn) {
+    const item = btn.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+</script>
+</body>
+</html>
